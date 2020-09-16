@@ -1,0 +1,20 @@
+{
+  "name": "phonebook-fullstack",
+  "version": "1.0.0",
+  "description": "A fullstack application that manages the phone numbers of user",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Oluwatobi Oyejide",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.4"
+  }
+}
