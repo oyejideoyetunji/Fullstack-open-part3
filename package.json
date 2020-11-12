@@ -10,7 +10,7 @@
     "build:ui": "rm -rf build && cd ../../task2/phone-book && npm run build --prod && cp -r build ../../task3/phonebook-fullstack",
     "deploy": "git push heroku master",
     "deploy:commit": "git add . && git commit -m server-deploy && git push && git push heroku master",
-    "deploy:full": "npm run build:ui && git add . && git commit -m server-deploy-uibuild && npm run deploy",
+    "deploy:full": "npm run build:ui && git add . && git commit -m server-deploy-uibuild && git push && npm run deploy",
     "logs:prod": "heroku logs --tail"
   },
   "author": "Oluwatobi Oyejide",
