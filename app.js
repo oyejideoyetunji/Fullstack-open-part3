@@ -33,7 +33,7 @@ app.get("/api/info", (req, res, next) => {
 
 app.get("/api/persons", (req, res, next) => {
     Person.find({}).then(persons =>{
-        if(persons.length){
+        if(persons){
             res.status(200).json(persons);
         }else {
             res.status(404).json({ error: "Data not found" });
@@ -116,12 +116,14 @@ app.put("/api/persons/:id", (req, res, next) =>{
 
     Person.findByIdAndUpdate(req.params.id, person, {new: true})
         .then(updatedData =>{
+            console.log(updatedData);
             if(updatedData){
                 res.json(updatedData)
             }else {
                 res.status(404).json({ error: "Data not found" });
             }
-        }).catch(error => next(error))
+        }
+    ).catch(error => next(error))
 
 })
 
@@ -134,10 +136,12 @@ const errorhandler = function(error, req, res, next){
 };
 app.use(errorhandler)
 
-const unknownEndpoint = function(req, res){
-    res.status(404).send({error: "unknown endpoint"});
+
+const unknownEndpoint = function (req, res) {
+    res.status(404).send({ error: "unknown endpoint" });
 };
 app.use(unknownEndpoint)
+
 
 app.listen(PORT, () => {
   console.log(`listening on port ${PORT}......`);
