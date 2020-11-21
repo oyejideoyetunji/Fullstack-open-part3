@@ -72,24 +72,33 @@ app.post("/api/persons", (req, res, next) => {
         });
         return;
     }
-    Person.exists({ name: recievedPersonData.name })
-        .then(exists =>{
-            if(exists){
-                res.status(400).json({
-                    error: `'name' must be unique, person with name: '${recievedPersonData.name}' already exists`
-                });
-                return;
-            }else {
-                const newPersonData = new Person({
-                    name: recievedPersonData.name,
-                    number: recievedPersonData.number
-                })
-                newPersonData.save().then(result => {
-                    res.status(200).send(result);
-                }).catch(error => next(error))
-            }
-        }
-    )
+
+    const newPersonData = new Person({
+        name: recievedPersonData.name,
+        number: recievedPersonData.number
+    })
+    newPersonData.save().then(result => {
+        res.status(200).send(result);
+    }).catch(error => next(error))
+
+    // Person.exists({ name: recievedPersonData.name })
+    //     .then(exists =>{
+    //         if(exists){
+    //             res.status(400).json({
+    //                 error: `'name' must be unique, person with name: '${recievedPersonData.name}' already exists`
+    //             });
+    //             return;
+    //         }else {
+    //             const newPersonData = new Person({
+    //                 name: recievedPersonData.name,
+    //                 number: recievedPersonData.number
+    //             })
+    //             newPersonData.save().then(result => {
+    //                 res.status(200).send(result);
+    //             }).catch(error => next(error))
+    //         }
+    //     }
+    // )
     
 })
 
@@ -128,9 +137,12 @@ app.put("/api/persons/:id", (req, res, next) =>{
 })
 
 const errorhandler = function(error, req, res, next){
-    console.error(error);
 
-    if(error.name === "CastError") return res.status(400).send({error: "malformated id"});
+    if(error.name === "CastError"){
+        return res.status(400).send({error: "malformated id"})
+    }else if(error.name === "ValidationError"){
+        res.status(400).json({error: error.message})
+    }
 
     next(error);
 };
