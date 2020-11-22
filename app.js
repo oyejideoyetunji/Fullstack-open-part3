@@ -1,145 +1,142 @@
-require("dotenv").config();
-const express = require("express");
-const morgan = require("morgan");
-const cors = require("cors");
-const Person = require("./models/person");
+require("dotenv").config()
+const express = require("express")
+const morgan = require("morgan")
+const cors = require("cors")
+const Person = require("./models/person")
 
 
-const app = express();
-const PORT = process.env.PORT || 8000;
-app.use(cors());
-app.use(express.json());
-app.use(express.static("build"));
+const app = express()
+const PORT = process.env.PORT || 8000
+app.use(cors())
+app.use(express.json())
+app.use(express.static("build"))
 
-morgan.token("body", function(req, res){
-    return JSON.stringify(req.body);
+morgan.token("body", function(req){
+    return JSON.stringify(req.body)
 })
-app.use(morgan( ":method :url :status :res[content-length] - :response-time ms :body" ));
+app.use(morgan( ":method :url :status :res[content-length] - :response-time ms :body" ))
 
 
 app.get("/api/info", (req, res, next) => {
-    let recievedTime = new Date();
-    Person.estimatedDocumentCount()
-        .then(count => {
-            res.status(200).send(
-                `
-                <h3>Phonebook has info for ${count} people</h3>
-                <h3>${recievedTime}</h3>
-                `
-            );
-        }
-    ).catch(error => next(error))
-});
+    let recievedTime = new Date()
+    Person.estimatedDocumentCount().then(count => {
+        res.status(200).send(
+            `
+            <h3>Phonebook has info for ${count} people</h3>
+            <h3>${recievedTime}</h3>
+            `
+        )
+    }).catch(error => next(error))
+})
 
 app.get("/api/persons", (req, res, next) => {
-    Person.find({}).then(persons =>{
+    Person.find({}).then(persons => {
         if(persons){
-            res.status(200).json(persons);
+            res.status(200).json(persons)
         }else {
-            res.status(404).json({ message: "Data not found" });
+            res.status(404).json({ message: "Data not found" })
         }
     }).catch(error => next(error))
-});
+})
 
 app.get("/api/persons/:id", (req, res, next) => {
-    Person.findById(req.params.id).then(person =>{
+    Person.findById(req.params.id).then(person => {
         if(person){
-            res.status(200).json(person);
+            res.status(200).json(person)
         }else {
-            res.status(404).json({message: "Data not found"});
+            res.status(404).json({ message: "Data not found" })
         }
     }).catch(error => next(error))
-});
+})
 
 app.delete("/api/persons/:id", (req, res, next) => {
-    Person.findByIdAndRemove(req.params.id).then(result =>{
-        res.status(204).end();
+    Person.findByIdAndRemove(req.params.id).then( () => {
+        res.status(204).end()
     }).catch(error => next(error))
-});
+})
 
 app.post("/api/persons", (req, res, next) => {
-    const recievedPersonData = req.body;
+    const recievedPersonData = req.body
 
     if(!recievedPersonData){
         res.status(400).json({
             message: "No content"
-        });
-        return;
+        })
+        return
     }
     if(!recievedPersonData.name || !recievedPersonData.number){
         res.status(400).json({
             message: "Incomplete content, 'name' or 'number' is missing"
-        });
-        return;
+        })
+        return
     }
 
     const newPersonData = new Person({
-        name: recievedPersonData.name,
+        name:   recievedPersonData.name,
         number: recievedPersonData.number
     })
     newPersonData.save().then(result => {
-        res.status(200).send(result);
+        res.status(200).send(result)
     }).catch(error => next(error))
-    
+
 })
 
-app.put("/api/persons/:id", (req, res, next) =>{
-    const personUpdateData = req.body;
+app.put("/api/persons/:id", (req, res, next) => {
+    const personUpdateData = req.body
 
     if (!personUpdateData) {
         res.status(400).json({
             message: "No content"
-        });
-        return;
+        })
+        return
     }
     if ( !personUpdateData.name || !personUpdateData.number ) {
         res.status(400).json({
             message: "Incomplete content"
-        });
-        return;
+        })
+        return
     }
 
     const person = {
-        name: personUpdateData.name,
+        name:   personUpdateData.name,
         number: personUpdateData.number
     }
 
-    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context: 'query' })
-        .then(updatedData =>{
+    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context: "query" })
+        .then(updatedData => {
             if(updatedData){
                 res.json(updatedData)
             }else {
-                res.status(404).json({ message: "Data not found" });
+                res.status(404).json({ message: "Data not found" })
             }
-        }
-    ).catch(error => next(error))
+        }).catch(error => next(error))
 
 })
 
 const errorhandler = function(error, req, res, next){
 
     if(error.name === "CastError"){
-        return res.status(400).send({message: "malformated id"})
+        return res.status(400).send({ message: "malformated id" })
     }else if(error.name === "ValidationError"){
-        res.status(400);
+        res.status(400)
         res.json({
             message: error.message
         })
     }else {
-        res.status(500).json({message: "an error ocurred"})
+        res.status(500).json({ message: "an error ocurred" })
     }
 
-    next(error);
-};
+    next(error)
+}
 app.use(errorhandler)
 
 
 const unknownEndpoint = function (req, res) {
-    res.status(404).send({ message: "unknown endpoint" });
-};
+    res.status(404).send({ message: "unknown endpoint" })
+}
 app.use(unknownEndpoint)
 
 
 app.listen(PORT, () => {
-  console.log(`listening on port ${PORT}......`);
-});
+    console.log(`listening on port ${PORT}......`)
+})

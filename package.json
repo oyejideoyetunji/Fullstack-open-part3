@@ -11,7 +11,8 @@
     "deploy": "git add . && git commit -m server-deploy && git push heroku master",
     "deploy:commit": "git add . && git commit -m server-deploy && git push && git push heroku master",
     "deploy:full": "npm run build:ui && npm run deploy:commit",
-    "logs:prod": "heroku logs --tail"
+    "logs:prod": "heroku logs --tail",
+    "lint": "eslint ."
   },
   "author": "Oluwatobi Oyejide",
   "license": "ISC",
@@ -24,6 +25,7 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "eslint": "^7.14.0",
     "nodemon": "^2.0.4"
   },
   "nodemonConfig": {
