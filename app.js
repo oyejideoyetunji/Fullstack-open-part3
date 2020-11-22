@@ -36,7 +36,7 @@ app.get("/api/persons", (req, res, next) => {
         if(persons){
             res.status(200).json(persons);
         }else {
-            res.status(404).json({ error: "Data not found" });
+            res.status(404).json({ message: "Data not found" });
         }
     }).catch(error => next(error))
 });
@@ -46,7 +46,7 @@ app.get("/api/persons/:id", (req, res, next) => {
         if(person){
             res.status(200).json(person);
         }else {
-            res.status(404).json({error: "Data not found"});
+            res.status(404).json({message: "Data not found"});
         }
     }).catch(error => next(error))
 });
@@ -62,13 +62,13 @@ app.post("/api/persons", (req, res, next) => {
 
     if(!recievedPersonData){
         res.status(400).json({
-            error: "No content"
+            message: "No content"
         });
         return;
     }
     if(!recievedPersonData.name || !recievedPersonData.number){
         res.status(400).json({
-            error: "Incomplete content, 'name' or 'number' is missing"
+            message: "Incomplete content, 'name' or 'number' is missing"
         });
         return;
     }
@@ -80,25 +80,6 @@ app.post("/api/persons", (req, res, next) => {
     newPersonData.save().then(result => {
         res.status(200).send(result);
     }).catch(error => next(error))
-
-    // Person.exists({ name: recievedPersonData.name })
-    //     .then(exists =>{
-    //         if(exists){
-    //             res.status(400).json({
-    //                 error: `'name' must be unique, person with name: '${recievedPersonData.name}' already exists`
-    //             });
-    //             return;
-    //         }else {
-    //             const newPersonData = new Person({
-    //                 name: recievedPersonData.name,
-    //                 number: recievedPersonData.number
-    //             })
-    //             newPersonData.save().then(result => {
-    //                 res.status(200).send(result);
-    //             }).catch(error => next(error))
-    //         }
-    //     }
-    // )
     
 })
 
@@ -107,13 +88,13 @@ app.put("/api/persons/:id", (req, res, next) =>{
 
     if (!personUpdateData) {
         res.status(400).json({
-            error: "No content"
+            message: "No content"
         });
         return;
     }
     if ( !personUpdateData.name || !personUpdateData.number ) {
         res.status(400).json({
-            error: "Incomplete content"
+            message: "Incomplete content"
         });
         return;
     }
@@ -123,13 +104,12 @@ app.put("/api/persons/:id", (req, res, next) =>{
         number: personUpdateData.number
     }
 
-    Person.findByIdAndUpdate(req.params.id, person, {new: true})
+    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context: 'query' })
         .then(updatedData =>{
-            console.log(updatedData);
             if(updatedData){
                 res.json(updatedData)
             }else {
-                res.status(404).json({ error: "Data not found" });
+                res.status(404).json({ message: "Data not found" });
             }
         }
     ).catch(error => next(error))
@@ -139,9 +119,14 @@ app.put("/api/persons/:id", (req, res, next) =>{
 const errorhandler = function(error, req, res, next){
 
     if(error.name === "CastError"){
-        return res.status(400).send({error: "malformated id"})
+        return res.status(400).send({message: "malformated id"})
     }else if(error.name === "ValidationError"){
-        res.status(400).json({error: error.message})
+        res.status(400);
+        res.json({
+            message: error.message
+        })
+    }else {
+        res.status(500).json({message: "an error ocurred"})
     }
 
     next(error);
@@ -150,7 +135,7 @@ app.use(errorhandler)
 
 
 const unknownEndpoint = function (req, res) {
-    res.status(404).send({ error: "unknown endpoint" });
+    res.status(404).send({ message: "unknown endpoint" });
 };
 app.use(unknownEndpoint)
 
