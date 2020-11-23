@@ -1,142 +1,30 @@
-require("dotenv").config()
+const config = require("./utils/config")
 const express = require("express")
-const morgan = require("morgan")
+const mongoose = require("mongoose")
 const cors = require("cors")
-const Person = require("./models/person")
-
-
+const logger = require("./utils/logger")
+const personRouter = require("./controllers/person")
+const customMiddleware = require("./utils/customMiddleware")
 const app = express()
-const PORT = process.env.PORT || 8000
+
+
+
+logger.info("connecting to url")
+mongoose.connect(
+    config.url,
+    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true }
+).then(() => {
+    logger.info("successfully connected to mongoDB")
+}).catch(error => {
+    logger.error("error connecting to mongodb: ", error.message)
+})
+
 app.use(cors())
 app.use(express.json())
 app.use(express.static("build"))
+app.use(customMiddleware.reqResLogger)
+app.use("/api/persons", personRouter)
+app.use(customMiddleware.errorhandler)
+app.use(customMiddleware.unknownEndpoint)
 
-morgan.token("body", function(req){
-    return JSON.stringify(req.body)
-})
-app.use(morgan( ":method :url :status :res[content-length] - :response-time ms :body" ))
-
-
-app.get("/api/info", (req, res, next) => {
-    let recievedTime = new Date()
-    Person.estimatedDocumentCount().then(count => {
-        res.status(200).send(
-            `
-            <h3>Phonebook has info for ${count} people</h3>
-            <h3>${recievedTime}</h3>
-            `
-        )
-    }).catch(error => next(error))
-})
-
-app.get("/api/persons", (req, res, next) => {
-    Person.find({}).then(persons => {
-        if(persons){
-            res.status(200).json(persons)
-        }else {
-            res.status(404).json({ message: "Data not found" })
-        }
-    }).catch(error => next(error))
-})
-
-app.get("/api/persons/:id", (req, res, next) => {
-    Person.findById(req.params.id).then(person => {
-        if(person){
-            res.status(200).json(person)
-        }else {
-            res.status(404).json({ message: "Data not found" })
-        }
-    }).catch(error => next(error))
-})
-
-app.delete("/api/persons/:id", (req, res, next) => {
-    Person.findByIdAndRemove(req.params.id).then( () => {
-        res.status(204).end()
-    }).catch(error => next(error))
-})
-
-app.post("/api/persons", (req, res, next) => {
-    const recievedPersonData = req.body
-
-    if(!recievedPersonData){
-        res.status(400).json({
-            message: "No content"
-        })
-        return
-    }
-    if(!recievedPersonData.name || !recievedPersonData.number){
-        res.status(400).json({
-            message: "Incomplete content, 'name' or 'number' is missing"
-        })
-        return
-    }
-
-    const newPersonData = new Person({
-        name:   recievedPersonData.name,
-        number: recievedPersonData.number
-    })
-    newPersonData.save().then(result => {
-        res.status(200).send(result)
-    }).catch(error => next(error))
-
-})
-
-app.put("/api/persons/:id", (req, res, next) => {
-    const personUpdateData = req.body
-
-    if (!personUpdateData) {
-        res.status(400).json({
-            message: "No content"
-        })
-        return
-    }
-    if ( !personUpdateData.name || !personUpdateData.number ) {
-        res.status(400).json({
-            message: "Incomplete content"
-        })
-        return
-    }
-
-    const person = {
-        name:   personUpdateData.name,
-        number: personUpdateData.number
-    }
-
-    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context: "query" })
-        .then(updatedData => {
-            if(updatedData){
-                res.json(updatedData)
-            }else {
-                res.status(404).json({ message: "Data not found" })
-            }
-        }).catch(error => next(error))
-
-})
-
-const errorhandler = function(error, req, res, next){
-
-    if(error.name === "CastError"){
-        return res.status(400).send({ message: "malformated id" })
-    }else if(error.name === "ValidationError"){
-        res.status(400)
-        res.json({
-            message: error.message
-        })
-    }else {
-        res.status(500).json({ message: "an error ocurred" })
-    }
-
-    next(error)
-}
-app.use(errorhandler)
-
-
-const unknownEndpoint = function (req, res) {
-    res.status(404).send({ message: "unknown endpoint" })
-}
-app.use(unknownEndpoint)
-
-
-app.listen(PORT, () => {
-    console.log(`listening on port ${PORT}......`)
-})
+module.exports = app
